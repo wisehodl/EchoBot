@@ -395,7 +395,7 @@ export default function App() {
     setIsPlaygroundThinking(true);
 
     try {
-      const aiResult = await generateBotMessage(settings, 'playground', 'playground', userMsg);
+      const aiResult = await generateBotMessage(settings, 'playground', communityProfiles, 'playground', userMsg);
       if (aiResult) {
         setPlaygroundMessages(prev => [...prev, { role: 'assistant', content: aiResult }]);
       }
@@ -473,6 +473,7 @@ export default function App() {
   async function generateBotMessage(
     botSettings: BotSettings, 
     identityId: string,
+    communityProfiles: Record<string, ProfileInfo>,
     targetNpub?: string, 
     content?: string, 
     context?: { pubkey: string; content: string }[],
@@ -489,9 +490,22 @@ export default function App() {
     try {
       const historyKey = `${identityId}:${targetNpub || 'default'}`;
       const history = conversationHistoryRef.current.get(historyKey) || [];
+
+      let targetHex = '';
+      if (botSettings.targetNpub) {
+        try {
+          const decoded = nip19.decode(botSettings.targetNpub) as any;
+          if (decoded.type === 'npub') targetHex = decoded.data
+        } catch (e) {}
+      }
+
+      const resolvedTargetName = communityProfiles[targetHex]?.name
+        || botSettings.targetName
+        || 'darling';
+
       const userPersona = botSettings.aiSystemPrompt
         .replace(/{name}/gi, botSettings.profile.name)
-        .replace(/{target_name}/gi, botSettings.targetName || 'darling');
+        .replace(/{target_name}/gi, resolvedTargetName);
 
       const hiddenRules = MODEL_HIDDEN_RULES[botSettings.modelId] || "";
       const fullSystemPrompt = `${hiddenRules}\n\n${userPersona}`;
@@ -1321,7 +1335,7 @@ export default function App() {
 
     try {
       const topicContext = `[Current Chat Topic]: ${swarmTopic}`;
-      const response = await generateBotMessage(identity.settings, identity.id, 'swarm-chat', `${topicContext}\n\n[${lastMsg.name}]: ${lastMsg.content}`, prevMsgs);
+      const response = await generateBotMessage(identity.settings, identity.id, communityProfiles, 'swarm-chat', `${topicContext}\n\n[${lastMsg.name}]: ${lastMsg.content}`, prevMsgs);
       
       if (signal.aborted) return;
       
@@ -2003,7 +2017,7 @@ export default function App() {
           } catch (e) {}
         }
 
-        const message = await generateBotMessage(identity.settings, identity.id, identity.settings.targetNpub, event.content, contextEvents);
+        const message = await generateBotMessage(identity.settings, identity.id, communityProfiles, identity.settings.targetNpub, event.content, contextEvents);
         if (!message) return;
 
         // Improved NIP-10 tagging
@@ -2308,7 +2322,7 @@ export default function App() {
         try {
           // AI Mode
           const inspiration = await getInspirationNotes(identity, 15);
-          const content = await generateBotMessage(identity.settings, identity.id, 'original-post', undefined, inspiration, true);
+          const content = await generateBotMessage(identity.settings, identity.id, communityProfiles, 'original-post', undefined, inspiration, true);
 
           if (!content) return;
 
