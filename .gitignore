@@ -36,3 +36,4 @@ deploy.sh
 *.log
 .temp
 cloud.md
+.prettierignore
