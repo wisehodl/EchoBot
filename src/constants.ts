@@ -122,8 +122,9 @@ export const DEFAULT_SETTINGS: BotSettings = {
     inspiration: 'target',
     replyToMentions: true,
     replyProbability: 0.5,
-    aiPostPrompt: 'Write a short, engaging status update about your current thoughts. Be concise and stay in character.'
-  }
+    aiPostPrompt:
+      'Write a short, engaging status update about your current thoughts. Be concise and stay in character.',
+  },
 };
 
 export const INITIAL_STATS: BotStats = {
