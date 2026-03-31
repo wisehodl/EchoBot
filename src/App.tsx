@@ -2212,7 +2212,7 @@ export default function App() {
         if (isAnotherBot) return;
 
         // Polite Mode Logic: Only skip observations, never direct mentions or primary targets
-        if ((matchesHashtag || matchesKeyword) && !mentionsSelf && !isTargetAuthor) {
+        if (!mentionsSelf) {
           const isPolite = identity.settings.politeMode || globalPoliteMode;
           const isReply = event.tags.some((t: any) => t[0] === 'e');
           if (isPolite && isReply) return;
